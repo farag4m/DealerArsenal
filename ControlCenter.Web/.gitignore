@@ -1,0 +1,10 @@
+bin/
+obj/
+logs/
+*.user
+.env
+.env.local
+.env.*.local
+ClientApp/node_modules/
+ClientApp/dist/
+ClientApp/.vite/
