@@ -14,3 +14,6 @@ EXAMPLES:
 [2024-01-15] Human added filter-by-dealership requirement mid-session → Commented on PR #4, backend updated branch
 
 ---
+
+[2026-04-15] Human requested ControlCenter.Web launcher shell (Task 1) based on llm-user-workflow-spec.md → Issue #1 created, worktree feature/1 spun up, UI Designer terminal primed (win ID 6851)
+[2026-04-15] Human gave greenlight for full task sequence (Tasks 2–24 + cohesion pass) → Issues #2–#49 created; all services independent at Services/<Name>/; UI and Backend split per issue; no ControlCenter.Web integration yet
