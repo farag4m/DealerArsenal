@@ -49,4 +49,40 @@ public sealed class DisplayService : IDisplayService
         _logger.LogInformation("Fetched dealership info for {Name}", result.Name);
         return result;
     }
+
+    public async Task<Reputation> GetReputationAsync(
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching reputation");
+        var result = await _repository.GetReputationAsync(cancellationToken);
+        _logger.LogInformation("Fetched reputation: {Rating} stars, {Count} reviews", result.Rating, result.ReviewCount);
+        return result;
+    }
+
+    public async Task<LobbyDisplaySnapshot> GetSnapshotAsync(
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching lobby display snapshot");
+
+        var dealershipTask = _repository.GetDealershipInfoAsync(cancellationToken);
+        var appointmentsTask = _repository.GetUpcomingAppointmentsAsync(cancellationToken);
+        var featuredTask = _repository.GetFeaturedVehiclesAsync(cancellationToken);
+        var soldTask = _repository.GetRecentlySoldAsync(cancellationToken);
+        var reputationTask = _repository.GetReputationAsync(cancellationToken);
+
+        await Task.WhenAll(dealershipTask, appointmentsTask, featuredTask, soldTask, reputationTask);
+
+        var snapshot = new LobbyDisplaySnapshot(
+            Dealership: await dealershipTask,
+            Appointments: await appointmentsTask,
+            FeaturedVehicles: await featuredTask,
+            SoldVehicles: await soldTask,
+            Reputation: await reputationTask
+        );
+
+        _logger.LogInformation("Snapshot fetched — {A} appointments, {F} featured, {S} sold",
+            snapshot.Appointments.Count, snapshot.FeaturedVehicles.Count, snapshot.SoldVehicles.Count);
+
+        return snapshot;
+    }
 }

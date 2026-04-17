@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ─── Backend services ───────────────────────────────────────────────────────
+  backend:
+    name: Backend — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ControlCenter.Web
+          - Services/LobbyDisplay
+          - Services/Appointments
+          - Services/Appraisals
+          - Services/Recon
+          - Services/Operations
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore "${{ matrix.service }}"
+
+      - name: Build
+        run: dotnet build "${{ matrix.service }}" --no-restore --configuration Release -warnaserror
+
+      - name: Test
+        run: |
+          TEST_DIR="${{ matrix.service }}.Tests"
+          if [ -d "$TEST_DIR" ]; then
+            dotnet test "$TEST_DIR" --no-build --configuration Release --logger "console;verbosity=normal"
+          else
+            echo "No test project at $TEST_DIR — skipping"
+          fi
+
+  # ─── Frontend ClientApps ─────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - ControlCenter.Web/ClientApp
+          - Services/LobbyDisplay/ClientApp
+          - Services/Appointments/ClientApp
+          - Services/Appraisals/ClientApp
+          - Services/Recon/ClientApp
+          - Services/Operations/ClientApp
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '${{ matrix.app }}/package-lock.json'
+
+      - name: Install
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+
+      - name: Type-check
+        working-directory: ${{ matrix.app }}
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: ${{ matrix.app }}
+        run: npx eslint src --max-warnings 0
+
+      - name: Build
+        working-directory: ${{ matrix.app }}
+        run: npm run build
