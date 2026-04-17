@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LobbyDisplay.Controllers;
 
 [ApiController]
-[Route("api/display")]
+[Route("api/lobby-display")]
 public sealed class DisplayController : ControllerBase
 {
     private readonly IDisplayService _service;
@@ -13,6 +13,15 @@ public sealed class DisplayController : ControllerBase
     public DisplayController(IDisplayService service)
     {
         _service = service;
+    }
+
+    /// <summary>Aggregate snapshot — single call returns all lobby display data.</summary>
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<LobbyDisplaySnapshot>>> GetSnapshot(
+        CancellationToken cancellationToken)
+    {
+        var data = await _service.GetSnapshotAsync(cancellationToken);
+        return Ok(ApiResponse<LobbyDisplaySnapshot>.Ok(data));
     }
 
     [HttpGet("featured")]
@@ -45,5 +54,13 @@ public sealed class DisplayController : ControllerBase
     {
         var data = await _service.GetDealershipInfoAsync(cancellationToken);
         return Ok(ApiResponse<DealershipInfo>.Ok(data));
+    }
+
+    [HttpGet("reputation")]
+    public async Task<ActionResult<ApiResponse<Reputation>>> GetReputation(
+        CancellationToken cancellationToken)
+    {
+        var data = await _service.GetReputationAsync(cancellationToken);
+        return Ok(ApiResponse<Reputation>.Ok(data));
     }
 }

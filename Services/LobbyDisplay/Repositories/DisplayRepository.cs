@@ -56,4 +56,13 @@ public sealed class DisplayRepository : IDisplayRepository
 
         return response.Data;
     }
+
+    public async Task<Reputation> GetReputationAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<Reputation>>(
+            "api/lobby-display/reputation", cancellationToken);
+
+        return response?.Data ?? new Reputation(Rating: 0m, ReviewCount: 0);
+    }
 }
