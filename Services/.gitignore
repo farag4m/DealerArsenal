@@ -1,0 +1,14 @@
+## Build output
+**/bin/
+**/obj/
+
+## User-specific files
+*.user
+*.suo
+.vs/
+
+## Rider
+.idea/
+
+## Rider/JetBrains
+*.DotSettings.user
