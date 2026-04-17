@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using LobbyDisplay.Middleware;
 using LobbyDisplay.Repositories;
 using LobbyDisplay.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +45,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Fixed-window rate limiter: 60 requests per minute per IP — same policy as ControlCenter.Web
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter("api", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 60;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
 
 // Security headers on every response
@@ -63,12 +79,15 @@ app.UseSerilogRequestLogging();
 
 app.UseCors();
 
+app.UseRateLimiter();
+
 app.UseAuthorization();
 
-// Health check
+// Health check — excluded from rate limiting (infra probe, not a public API call)
 app.MapHealthChecks("/health");
 
-app.MapControllers();
+app.MapControllers()
+   .RequireRateLimiting("api");
 
 app.Run();
 
